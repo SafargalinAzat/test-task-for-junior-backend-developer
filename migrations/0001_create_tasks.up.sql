@@ -8,3 +8,15 @@ CREATE TABLE IF NOT EXISTS tasks (
 );
 
 CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks (status);
+
+CREATE TABLE task_recurrences (
+    id BIGSERIAL PRIMARY KEY,
+    task_id BIGINT NOT NULL UNIQUE REFERENCES tasks(id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    every_n_days INT,
+    monthly_date INT,
+    dates TIMESTAMPTZ[],
+    even_odd TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
