@@ -28,7 +28,7 @@ const (
 )
 
 type Recurrence struct {
-	Type        PeriodicType `json:"periodic_type"`
+	Type        PeriodicType `json:"type"`
 	EveryNDays  int          `json:"every_n_days,omitempty"`
 	MonthlyDate int          `json:"monthly_date,omitempty"`
 	Dates       []time.Time  `json:"dates,omitempty"`

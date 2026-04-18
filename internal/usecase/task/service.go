@@ -117,19 +117,38 @@ func validateCreateInput(input CreateInput) (CreateInput, error) {
 		if !(input.Recurrence.EveryNDays > 0) {
 			return CreateInput{}, fmt.Errorf("%w: number of days must be positive", ErrInvalidInput)
 		}
+		input.Recurrence = taskdomain.Recurrence{
+			Type:       input.Recurrence.Type,
+			EveryNDays: input.Recurrence.EveryNDays,
+		}
 	case taskdomain.Monthly:
 		if !(input.Recurrence.MonthlyDate >= 1 && input.Recurrence.MonthlyDate <= 30) {
 			return CreateInput{}, fmt.Errorf("%w: date should be between 1 and 30", ErrInvalidInput)
+		}
+		input.Recurrence = taskdomain.Recurrence{
+			Type:        input.Recurrence.Type,
+			MonthlyDate: input.Recurrence.MonthlyDate,
 		}
 	case taskdomain.ExactDates:
 		if !(len(input.Recurrence.Dates) >= 1 && len(input.Recurrence.Dates) <= 1000) {
 			return CreateInput{}, fmt.Errorf("%w: you should specify at least 1 date and at most 1000", ErrInvalidInput)
 		}
+		input.Recurrence = taskdomain.Recurrence{
+			Type:  input.Recurrence.Type,
+			Dates: input.Recurrence.Dates,
+		}
 	case taskdomain.EvenOddDates:
 		if !input.Recurrence.EvenOdd.Valid() {
 			return CreateInput{}, fmt.Errorf("%w: even_odd_dates param is incorrect", ErrInvalidInput)
 		}
+		input.Recurrence = taskdomain.Recurrence{
+			Type:    input.Recurrence.Type,
+			EvenOdd: input.Recurrence.EvenOdd,
+		}
 	case taskdomain.NotPeriodic:
+		input.Recurrence = taskdomain.Recurrence{
+			Type: input.Recurrence.Type,
+		}
 	default:
 		return CreateInput{}, fmt.Errorf("%w: unknown recurrence_type", ErrInvalidInput)
 	}
@@ -154,19 +173,38 @@ func validateUpdateInput(input UpdateInput) (UpdateInput, error) {
 		if !(input.Recurrence.EveryNDays > 0) {
 			return UpdateInput{}, fmt.Errorf("%w: number of days must be positive", ErrInvalidInput)
 		}
+		input.Recurrence = taskdomain.Recurrence{
+			Type:       input.Recurrence.Type,
+			EveryNDays: input.Recurrence.EveryNDays,
+		}
 	case taskdomain.Monthly:
 		if !(input.Recurrence.MonthlyDate >= 1 && input.Recurrence.MonthlyDate <= 30) {
 			return UpdateInput{}, fmt.Errorf("%w: date should be between 1 and 30", ErrInvalidInput)
+		}
+		input.Recurrence = taskdomain.Recurrence{
+			Type:        input.Recurrence.Type,
+			MonthlyDate: input.Recurrence.MonthlyDate,
 		}
 	case taskdomain.ExactDates:
 		if !(len(input.Recurrence.Dates) >= 1 && len(input.Recurrence.Dates) <= 1000) {
 			return UpdateInput{}, fmt.Errorf("%w: you should specify at least 1 date and at most 1000", ErrInvalidInput)
 		}
+		input.Recurrence = taskdomain.Recurrence{
+			Type:  input.Recurrence.Type,
+			Dates: input.Recurrence.Dates,
+		}
 	case taskdomain.EvenOddDates:
 		if !input.Recurrence.EvenOdd.Valid() {
 			return UpdateInput{}, fmt.Errorf("%w: even_odd_dates is incorrect", ErrInvalidInput)
 		}
+		input.Recurrence = taskdomain.Recurrence{
+			Type:    input.Recurrence.Type,
+			EvenOdd: input.Recurrence.EvenOdd,
+		}
 	case taskdomain.NotPeriodic:
+		input.Recurrence = taskdomain.Recurrence{
+			Type: input.Recurrence.Type,
+		}
 	default:
 		return UpdateInput{}, fmt.Errorf("%w: unknown recurrence_type", ErrInvalidInput)
 	}

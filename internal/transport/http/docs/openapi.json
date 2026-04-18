@@ -1,9 +1,9 @@
 {
-  "openapi": "3.0.3",
+"openapi": "3.0.3",
   "info": {
     "title": "Task Service API",
     "version": "1.0.0",
-    "description": "CRUD API for tasks built with clean architecture."
+    "description": "CRUD API for tasks built with clean architecture, including recurrence support."
   },
   "servers": [
     {
@@ -16,6 +16,185 @@
       "description": "Operations with tasks"
     }
   ],
+  "components": {
+    "schemas": {
+      "RecurrenceType": {
+        "type": "string",
+        "enum": ["not_periodic", "daily", "monthly", "exact_dates", "even_odd_dates"],
+        "example": "daily"
+      },
+      "EvenOddType": {
+        "type": "string",
+        "enum": ["even", "odd"],
+        "example": "even"
+      },
+      "Recurrence": {
+        "type": "object",
+        "description": "Поля автоматически нормализуются, только релевантные для выбранного типа возвращаются в ответе",
+        "properties": {
+          "type": {
+            "$ref": "#/components/schemas/RecurrenceType"
+          },
+          "every_n_days": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Только для типа daily"
+          },
+          "monthly_date": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 30,
+            "description": "Только для типа monthly"
+          },
+          "dates": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Только для типа exact_dates"
+          },
+          "even_odd": {
+            "$ref": "#/components/schemas/EvenOddType",
+            "description": "Только для типа even_odd_dates"
+          }
+        },
+        "examples": [
+          {
+            "summary": "Ежедневная задача",
+            "value": {
+              "type": "daily",
+              "every_n_days": 1
+            }
+          },
+          {
+            "summary": "Ежемесячная задача",
+            "value": {
+              "type": "monthly",
+              "monthly_date": 15
+            }
+          },
+          {
+            "summary": "Задача на конкретные даты",
+            "value": {
+              "type": "exact_dates",
+              "dates": ["2026-03-24T00:00:00Z", "2026-03-25T00:00:00Z"]
+            }
+          },
+          {
+            "summary": "Задача на чётные/нечётные дни",
+            "value": {
+              "type": "even_odd_dates",
+              "even_odd": "even"
+            }
+          },
+          {
+            "summary": "Не периодическая задача",
+            "value": {
+              "type": "not_periodic"
+            }
+          }
+        ]
+      },
+      "CreateTaskRequest": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Prepare release"
+          },
+          "description": {
+            "type": "string",
+            "example": "Collect release notes and check migrations"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["new", "in_progress", "done"],
+            "example": "new"
+          },
+          "recurrence": {
+            "$ref": "#/components/schemas/Recurrence"
+          }
+        }
+      },
+      "UpdateTaskRequest": {
+        "type": "object",
+        "required": ["title", "status"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Prepare release"
+          },
+          "description": {
+            "type": "string",
+            "example": "Collect release notes and check migrations"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["new", "in_progress", "done"],
+            "example": "in_progress"
+          },
+          "recurrence": {
+            "$ref": "#/components/schemas/Recurrence"
+          }
+        }
+      },
+      "Task": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "example": 1 },
+          "title": { "type": "string", "example": "Prepare release" },
+          "description": {
+            "type": "string",
+            "example": "Collect release notes and check migrations"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["new", "in_progress", "done"],
+            "example": "new"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-03-24T00:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "example": "2026-03-24T00:00:00Z"
+          },
+          "recurrence": {
+            "$ref": "#/components/schemas/Recurrence"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": { "type": "string", "example": "task not found" }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      }
+    }
+  },
   "paths": {
     "/api/v1/tasks": {
       "get": {
@@ -129,98 +308,6 @@
         "responses": {
           "204": { "description": "Deleted" },
           "404": { "$ref": "#/components/responses/NotFound" }
-        }
-      }
-    }
-  },
-  "components": {
-    "responses": {
-      "BadRequest": {
-        "description": "Bad request",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
-          }
-        }
-      },
-      "NotFound": {
-        "description": "Resource not found",
-        "content": {
-          "application/json": {
-            "schema": { "$ref": "#/components/schemas/Error" }
-          }
-        }
-      }
-    },
-    "schemas": {
-      "CreateTaskRequest": {
-        "type": "object",
-        "required": ["title"],
-        "properties": {
-          "title": {
-            "type": "string",
-            "example": "Prepare release"
-          },
-          "description": {
-            "type": "string",
-            "example": "Collect release notes and check migrations"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["new", "in_progress", "done"],
-            "example": "new"
-          }
-        }
-      },
-      "UpdateTaskRequest": {
-        "type": "object",
-        "required": ["title", "status"],
-        "properties": {
-          "title": {
-            "type": "string",
-            "example": "Prepare release"
-          },
-          "description": {
-            "type": "string",
-            "example": "Collect release notes and check migrations"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["new", "in_progress", "done"],
-            "example": "in_progress"
-          }
-        }
-      },
-      "Task": {
-        "type": "object",
-        "properties": {
-          "id": { "type": "integer", "format": "int64", "example": 1 },
-          "title": { "type": "string", "example": "Prepare release" },
-          "description": {
-            "type": "string",
-            "example": "Collect release notes and check migrations"
-          },
-          "status": {
-            "type": "string",
-            "enum": ["new", "in_progress", "done"],
-            "example": "new"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-03-24T00:00:00Z"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "example": "2026-03-24T00:00:00Z"
-          }
-        }
-      },
-      "Error": {
-        "type": "object",
-        "properties": {
-          "error": { "type": "string", "example": "task not found" }
         }
       }
     }
